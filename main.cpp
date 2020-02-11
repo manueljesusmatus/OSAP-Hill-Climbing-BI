@@ -8,7 +8,7 @@ int main(int argc, char const *argv[])
 {
     string filename = "nott1.txt";
     DataOSAP d(filename);
-    cout << d.NoOfConstraints << endl;
+    cout << d.ESPACE[3] << endl;
     d.FreeData();
     return 0;
 }

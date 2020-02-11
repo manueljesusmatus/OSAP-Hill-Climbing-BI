@@ -10,7 +10,9 @@ class DataOSAP
 {
 public:
     ifstream input;
-    int NoOfEntities, NoOfRooms, NoOfConstraints;
+    int NoOfEntities;
+    int NoOfRooms;
+    int NoOfConstraints;
     string linea;
     /*********** ENTITIES VARS ***********/
     int* EID;                   // ID de la entidad
