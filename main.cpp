@@ -38,7 +38,6 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < NoOfEntities; i++)
     {
         input >> EID[i] >> GID[i] >> ESPACE[i];
-        // cout << EID[i] << "--" << GID[i] << "--" << ESPACE[i] << endl;
     }
 
     /********************* ROOMS ****************************/
@@ -50,17 +49,14 @@ int main(int argc, char const *argv[])
     int FID[NoOfRooms];
     double RSPACE[NoOfRooms];
     int ADJ_LIST_SIZE;
-    
-    // SOLUCI'ON PARCHE, Basado en q no puede haber una lista más larga (probablemente haya q usar listas dinamicas)
-    int* ADJ_LIST [NoOfRooms];
-    //int ADJ_LIST [NoOfRooms][NoOfRooms];
+    // revisar si se puede hacer sin mallo
+    int** ADJ_LIST = (int**) malloc(NoOfRooms*sizeof(int*));
 
     /* LECTURA DE TABLA ROOMS */
     for (int i = 0; i < NoOfRooms; i++)
     {
         input >> RID[i] >> FID[i] >> RSPACE[i] >> ADJ_LIST_SIZE;
-        ADJ_LIST[i] = new int(ADJ_LIST_SIZE);
-        cout << RID[i] << endl;
+        ADJ_LIST[i] = (int*) malloc(ADJ_LIST_SIZE*sizeof(int));;
         for(int j = 0; j < ADJ_LIST_SIZE; j++){
             input >> ADJ_LIST[i][j];
         }
@@ -84,7 +80,11 @@ int main(int argc, char const *argv[])
         input >> CID[i] >> CTYPE[i] >> SorH[i] >> C1[i] >> C2[i];
     }
 
-
+    /* Free memory */
+    for(int i = 0; i < NoOfRooms; i++){
+        free(ADJ_LIST[i]);
+    }
+    free(ADJ_LIST);
     input.close();
     return 0;
 }
