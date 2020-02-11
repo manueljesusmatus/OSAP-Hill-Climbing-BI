@@ -1,0 +1,26 @@
+Algoritmo=HC+Restart
+Problema=TSP simetrico
+Acercamiento=Soluciones factibles
+Representacion=Permutacion de valores enteros
+Funcion_de_evaluacion=Funcion objetivo
+Movimiento=Intercambio de ciudades contiguas 
+Solucion_inicial=aleatoria
+Formato Input=De acuerdo a lo establecido en TSPLib
+
+Para Compilar use:
+make clean
+make 
+
+Para Ejecutar use:
+make exe
+
+Linea de ejecucion:
+./HC+Restart ruta_instancia/nombre_instancia archivo_resultados semilla numero_restarts debug
+
+debug=0, no muestra informacion por pantalla
+
+Ejemplo:
+./HC+Restart Instances/burma14.tsp Out.txt 123 10000 1
+./HC+Restart Instances/berlin52.tsp Out.txt 123 10000 0
+
+

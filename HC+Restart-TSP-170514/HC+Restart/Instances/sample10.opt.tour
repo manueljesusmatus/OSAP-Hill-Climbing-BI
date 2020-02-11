@@ -1,0 +1,16 @@
+NAME : sample10.opt.tour
+TYPE : TOUR
+DIMENSION : 10
+SOLUTION: 1
+TOUR_SECTION
+4
+2
+7
+8
+3
+9
+10
+5
+1
+6
+-1
