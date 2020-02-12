@@ -1,10 +1,7 @@
 #include <iostream>
-#include <fstream>
 #include <string>
-#include "DataOSAP.h"
+#include "Algorithm.h"
 using namespace std;
-
-
 
 int main(int argc, char const *argv[])
 {
@@ -12,11 +9,8 @@ int main(int argc, char const *argv[])
     srand(time(NULL));
 
     string filename = "nott1.txt";
-    DataOSAP osapSol(filename);
 
-    osapSol.CrearSolucionInicial();
-    osapSol.ShowSolution();
+    HillClimbing(filename);
 
-    osapSol.FreeData();
     return 0;
 }
