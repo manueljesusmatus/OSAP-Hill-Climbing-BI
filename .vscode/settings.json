@@ -4,6 +4,9 @@
         "string": "cpp",
         "list": "cpp",
         "fstream": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "limits": "cpp",
+        "ostream": "cpp",
+        "cstdlib": "cpp"
     }
 }

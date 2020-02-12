@@ -1,11 +1,10 @@
 #include "DataOSAP.h"
 
 
-
 DataOSAP::DataOSAP(string FileToRead)
 {
-    input.open(FileToRead);
-    if (!input.is_open())
+    this->input.open(FileToRead);
+    if (!this->input.is_open())
     {
         cout << "Error al Abrir archivo" << endl;
         exit(10);
@@ -13,55 +12,115 @@ DataOSAP::DataOSAP(string FileToRead)
     else
     {
         /* LECTURA DE LAS PRIMERAS 3 VARIABLES */
-        input >> linea >> NoOfEntities;
-        input >> linea >> NoOfRooms;
-        input >> linea >> NoOfConstraints;
+        this->input >> this->linea >> this->NoOfEntities;
+        this->input >> this->linea >> this->NoOfRooms;
+        this->input >> this->linea >> this->NoOfConstraints;
 
         /********************* ENTITIES ****************************/
-        input >> linea;
+        this->input >> this->linea;
         /* ENTITIES VARS */
-        EID = new int[NoOfEntities];
-        GID = new int[NoOfEntities];
-        ESPACE = new double[NoOfEntities];
+        this->EID = new int[this->NoOfEntities];
+        this->GID = new int[this->NoOfEntities];
+        this->ESPACE = new double[this->NoOfEntities];
         /* LECTURA DE TABLA ENTITIES */
-        for (int i = 0; i < NoOfEntities; i++)
+        for (int i = 0; i < this->NoOfEntities; i++)
         {
-            input >> EID[i] >> GID[i] >> ESPACE[i];
+            this->input >> this->EID[i] >> this->GID[i] >> this->ESPACE[i];
         }
 
         /********************* ROOMS ****************************/
-        input >> linea;
+        this->input >> this->linea;
         /* ROOMS VARS */
-        RID = new int[NoOfRooms];
-        FID = new int[NoOfRooms];
-        RSPACE = new double[NoOfRooms];
-        ADJ_LIST = (int **)malloc(NoOfRooms * sizeof(int *));
+        this->RID = new int[this->NoOfRooms];
+        this->FID = new int[this->NoOfRooms];
+        this->RSPACE = new double[this->NoOfRooms];
+        this->ADJ_LIST = (int **)malloc(this->NoOfRooms * sizeof(int *));
         /* LECTURA DE TABLA ROOMS */
-        for (int i = 0; i < NoOfRooms; i++)
+        for (int i = 0; i < this->NoOfRooms; i++)
         {
-            input >> RID[i] >> FID[i] >> RSPACE[i] >> ADJ_LIST_SIZE;
-            ADJ_LIST[i] = (int *)malloc(ADJ_LIST_SIZE * sizeof(int));
-            for (int j = 0; j < ADJ_LIST_SIZE; j++)
+            this->input >> this->RID[i] >> this->FID[i] >> this->RSPACE[i] >> this->ADJ_LIST_SIZE;
+            this->ADJ_LIST[i] = (int *)malloc(this->ADJ_LIST_SIZE * sizeof(int));
+            for (int j = 0; j < this->ADJ_LIST_SIZE; j++)
             {
-                input >> ADJ_LIST[i][j];
+                this->input >> this->ADJ_LIST[i][j];
             }
         }
 
         /********************* CONSTRAINTS ****************************/
-        input >> linea;
+        this->input >> this->linea;
         /* ENTITIES VARS */
-        CID = new int[NoOfConstraints];
-        CTYPE = new int[NoOfConstraints];
-        SorH = new int[NoOfConstraints];
-        C1 = new int[NoOfConstraints];
-        C2 = new int[NoOfConstraints];
+        this->CID = new int[this->NoOfConstraints];
+        this->CTYPE = new int[this->NoOfConstraints];
+        this->SorH = new int[this->NoOfConstraints];
+        this->C1 = new int[this->NoOfConstraints];
+        this->C2 = new int[this->NoOfConstraints];
         /* LECTURA DE TABLA ENTITIES */
-        for (int i = 0; i < NoOfConstraints; i++)
+        for (int i = 0; i < this->NoOfConstraints; i++)
         {
-            input >> CID[i] >> CTYPE[i] >> SorH[i] >> C1[i] >> C2[i];
+            input >> this->CID[i] >> this->CTYPE[i] >> this->SorH[i] >> this->C1[i] >> this->C2[i];
         }
     }
 }
+
+
+void DataOSAP::initSolution(){
+    /* Se inicia el arreglo q representa la solución */
+    solution = new int[this->NoOfEntities];
+}
+
+
+/* Número random entre 0 y max */
+int DataOSAP::getRandomNumber( int max ){
+    return rand() %max;
+}
+
+
+/* Cambio de habitación entre las entidades A y B*/
+void DataOSAP::swap(int EntityA, int EntityB){
+    int aux = this->solution[EntityA];
+    this->solution[EntityA] = this->solution[EntityB];
+    this->solution[EntityB] = aux;
+    return;
+}
+
+
+/* Intercambia todas las entidades en RoomA a RoomB y viceversa */
+void DataOSAP::interchange(int RoomA, int RoomB){
+    for(int k = 0; k < this->NoOfEntities; k++){
+        if( this->solution[k] == RoomA)
+            this->solution[k] = RoomB;
+        else if( this->solution[k] == RoomB)
+            this->solution[k] = RoomA;
+    }
+    return;
+}
+
+
+/* Asigna la habitación room a la entidad Entity*/
+void DataOSAP::allocate(int Entity, int room){
+    this->solution[Entity] = room;
+    return;
+}
+
+
+void DataOSAP::initialSolution(){
+    int k = this->NoOfRooms/3;
+    this->AuxRoomsN = new int[ k ];
+
+    for( int ENTITY = 0; ENTITY < this->NoOfEntities; ENTITY++){
+        // Cada entidad es enviada a una pieza totalmente random (hasta el moment)
+        this->solution[ENTITY] = getRandomNumber( k );
+    }
+}
+
+
+void DataOSAP::ShowSolution(){
+    for(int i = 0; i < this->NoOfEntities; i++ ){
+        cout << this->solution[i] << " - ";
+    }
+    cout << endl;
+}
+
 
 void DataOSAP::FreeData()
 {
@@ -72,15 +131,17 @@ void DataOSAP::FreeData()
     }
     free(this->ADJ_LIST);
     this->input.close();
-    delete []FID;
-    delete []RID;
-    delete []EID;
-    delete []GID;
-    delete []ESPACE;
-    delete []RSPACE;
-    delete []CID;
-    delete []CTYPE;
-    delete []SorH;
-    delete []C1;
-    delete []C2;
+    delete []this->FID;
+    delete []this->RID;
+    delete []this->EID;
+    delete []this->GID;
+    delete []this->ESPACE;
+    delete []this->RSPACE;
+    delete []this->CID;
+    delete []this->CTYPE;
+    delete []this->SorH;
+    delete []this->C1;
+    delete []this->C2;
+    delete []this->solution;
+    delete []this->AuxRoomsN;
 }

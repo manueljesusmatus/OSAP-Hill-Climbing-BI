@@ -9,6 +9,6 @@
     sudo apt-get install valgrind
     
 #### Test
-    valgrind --leak-check=full -v ./main
+    valgrind --leak-check=yes -v ./main
 
 
