@@ -25,7 +25,7 @@ public:
     int** ADJ_LIST;             // Lista de adyacencia
     int* RID;                   // ID de la habitación
     int* FID;                   // ID del piso
-    int ADJ_LIST_SIZE;          // Tamaño de la lista de adyacencia
+    int* ADJ_LIST_SIZE;         // Tamaño de la lista de adyacencia
     double* RSPACE;             // Capacidad de la habitación
 
     /*********** CONSTRAINT VARS ***********/
@@ -37,17 +37,29 @@ public:
 
     /*********** SOLUTION VARS ***********/
     int* solution;
+    int* CurrentroomCapacity;
     int* AuxRoomsN;
 
     /*********** CONSTRUCTOR Y METODOS ***********/
     DataOSAP(string FileToRead);// constructor
-    void initSolution();
+    void initArraySolution();
     int getRandomNumber( int max );
     void swap(int EntityA, int EntityB);
     void interchange(int RoomA, int RoomB);
     void allocate(int Entity, int room);
-    void initialSolution();
+    void CrearSolucionInicial();
     void ShowSolution();
+
+    /* HARD CONSTRAINTS */
+    int HC_CAPACITY_CONSTRAINT(int Room);
+    int HC_ALLOCATION_CONSTRAINT(int Entity, int room);
+    int HC_NONALLOCATION_CONSTRAINT(int Entity, int room);
+    int HC_SAMEROOM_CONSTRAINT(int EntityA, int EntityB);
+    int HC_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB);
+    int HC_NOTSHARING_CONSTRAINT(int Entity);
+    int HC_ADJACENCY_CONSTRAINT(int EntityA, int EntityB);
+    int HC_NEARBY_CONSTRAINT(int EntityA, int EntityB);
+    int HC_AWAYFROM_CONSTRAINT(int EntityA, int EntityB);
     void FreeData();           
 };
 #endif

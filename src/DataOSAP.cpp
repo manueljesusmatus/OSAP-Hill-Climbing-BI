@@ -34,13 +34,14 @@ DataOSAP::DataOSAP(string FileToRead)
         this->RID = new int[this->NoOfRooms];
         this->FID = new int[this->NoOfRooms];
         this->RSPACE = new double[this->NoOfRooms];
+        this->ADJ_LIST_SIZE = new int[this->NoOfRooms];
         this->ADJ_LIST = (int **)malloc(this->NoOfRooms * sizeof(int *));
         /* LECTURA DE TABLA ROOMS */
         for (int i = 0; i < this->NoOfRooms; i++)
         {
-            this->input >> this->RID[i] >> this->FID[i] >> this->RSPACE[i] >> this->ADJ_LIST_SIZE;
-            this->ADJ_LIST[i] = (int *)malloc(this->ADJ_LIST_SIZE * sizeof(int));
-            for (int j = 0; j < this->ADJ_LIST_SIZE; j++)
+            this->input >> this->RID[i] >> this->FID[i] >> this->RSPACE[i] >> this->ADJ_LIST_SIZE[i];
+            this->ADJ_LIST[i] = (int *)malloc(this->ADJ_LIST_SIZE[i] * sizeof(int));
+            for (int j = 0; j < this->ADJ_LIST_SIZE[i]; j++)
             {
                 this->input >> this->ADJ_LIST[i][j];
             }
@@ -63,9 +64,13 @@ DataOSAP::DataOSAP(string FileToRead)
 }
 
 
-void DataOSAP::initSolution(){
+void DataOSAP::initArraySolution(){
     /* Se inicia el arreglo q representa la solución */
-    solution = new int[this->NoOfEntities];
+    this->solution = new int[ this->NoOfEntities ];
+    this->CurrentroomCapacity = new int[ this->NoOfRooms ];
+    for(int k = 0; k < this->NoOfRooms; k++){
+        this->CurrentroomCapacity[k] = this->RSPACE[k];
+    }
 }
 
 
@@ -103,13 +108,18 @@ void DataOSAP::allocate(int Entity, int room){
 }
 
 
-void DataOSAP::initialSolution(){
-    int k = this->NoOfRooms/3;
-    this->AuxRoomsN = new int[ k ];
+void DataOSAP::CrearSolucionInicial(){
+    this->initArraySolution();
+    int k = this->NoOfRooms;
+    this->AuxRoomsN = new int[10];
+
 
     for( int ENTITY = 0; ENTITY < this->NoOfEntities; ENTITY++){
-        // Cada entidad es enviada a una pieza totalmente random (hasta el moment)
-        this->solution[ENTITY] = getRandomNumber( k );
+        // se busca una habitación random
+        int pos = getRandomNumber( k );
+        // se asigna una habitación random a la entidad
+        this->solution[ENTITY] = pos;
+        // se actualiza la capacidad de las habitaciones
     }
 }
 
@@ -121,6 +131,84 @@ void DataOSAP::ShowSolution(){
     cout << endl;
 }
 
+/*************************  HARD  CONSTRAINTS *************************/
+int DataOSAP::HC_ALLOCATION_CONSTRAINT(int Entity, int room){
+    if ( this->solution[Entity] == room )
+        return 1;
+    else
+        return 0;
+}
+
+int DataOSAP::HC_NONALLOCATION_CONSTRAINT(int Entity, int room){
+    if ( this->solution[Entity] != room )
+        return 1;
+    else
+        return 0; 
+}
+
+int DataOSAP::HC_CAPACITY_CONSTRAINT(int Room){
+    int capacity = this->RSPACE[Room];
+    for(int k = 0; k < this->NoOfEntities; k++){
+        if( this->solution[k] == Room ){
+            capacity -= this->ESPACE[k];
+            if (capacity < 0 )
+                return 0;
+        }
+    }
+    return 1;
+}
+
+int DataOSAP::HC_SAMEROOM_CONSTRAINT(int EntityA, int EntityB){
+    if( this->solution[EntityA] == this->solution[EntityB])
+        return 1;
+    else
+        return 0;
+}
+
+int DataOSAP::HC_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB){
+    if( this->solution[EntityA] != this->solution[EntityB])
+        return 1;
+    else
+        return 0;
+}
+
+int DataOSAP::HC_NOTSHARING_CONSTRAINT(int Entity){
+    int room = this->solution[Entity];
+    for(int y = 0; y < this->NoOfEntities; y++){
+        if (( this->solution[y] == room ) && ( y != Entity))
+            return 0;
+    }
+    return 1;
+}
+
+int DataOSAP::HC_ADJACENCY_CONSTRAINT(int EntityA, int EntityB){
+    int roomA = this->solution[EntityA];
+    int roomB = this->solution[EntityB];
+    int size = this->ADJ_LIST_SIZE[ roomA ];
+    for( int x = 0; x < size; x++){
+        if ( this->ADJ_LIST[roomA][x] == roomB )
+            return 1;
+    }
+    return 0;
+}
+
+int DataOSAP::HC_NEARBY_CONSTRAINT(int EntityA, int EntityB){
+    int roomA = this->solution[EntityA];
+    int roomB = this->solution[EntityB];
+    if ( this->FID[roomA] == this->FID[roomB] )
+        return 1;
+    else
+        return 0;
+}
+
+int DataOSAP::HC_AWAYFROM_CONSTRAINT(int EntityA, int EntityB){
+    int roomA = this->solution[EntityA];
+    int roomB = this->solution[EntityB];
+    if ( this->FID[roomA] != this->FID[roomB] )
+        return 1;
+    else
+        return 0;
+}
 
 void DataOSAP::FreeData()
 {

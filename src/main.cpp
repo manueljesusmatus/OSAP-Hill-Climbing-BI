@@ -12,11 +12,11 @@ int main(int argc, char const *argv[])
     srand(time(NULL));
 
     string filename = "nott1.txt";
-    DataOSAP d(filename);
-    d.initSolution();
-    d.initialSolution();
-    d.ShowSolution();
+    DataOSAP osapSol(filename);
 
-    d.FreeData();
+    osapSol.CrearSolucionInicial();
+    osapSol.ShowSolution();
+
+    osapSol.FreeData();
     return 0;
 }
