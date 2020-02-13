@@ -115,7 +115,7 @@ void Solution::interchange(int RoomA, int RoomB){
 
 
 /* Asigna la habitación room a la entidad Entity*/
-void Solution::allocate(int Entity, int room){
+void Solution::reallocate(int Entity, int room){
     this->solution[Entity] = room;
     return;
 }
@@ -131,16 +131,16 @@ void Solution::ShowSolution(){
 /*************************  CONSTRAINTS *************************/
 int Solution::C_ALLOCATION_CONSTRAINT(int Entity, int room){
     if ( this->solution[Entity] == room )
-        return 1;
-    else
         return 0;
+    else
+        return 1;
 }
 
 int Solution::C_NONALLOCATION_CONSTRAINT(int Entity, int room){
     if ( this->solution[Entity] != room )
-        return 1;
+        return 0;
     else
-        return 0; 
+        return 1; 
 }
 
 int Solution::C_CAPACITY_CONSTRAINT(int Room){
@@ -149,33 +149,33 @@ int Solution::C_CAPACITY_CONSTRAINT(int Room){
         if( this->solution[k] == Room ){
             capacity -= this->ESPACE[k];
             if (capacity < 0 )
-                return 0;
+                return 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 int Solution::C_SAMEROOM_CONSTRAINT(int EntityA, int EntityB){
     if( this->solution[EntityA] == this->solution[EntityB])
-        return 1;
-    else
         return 0;
+    else
+        return 1;
 }
 
 int Solution::C_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB){
     if( this->solution[EntityA] != this->solution[EntityB])
-        return 1;
-    else
         return 0;
+    else
+        return 1;
 }
 
 int Solution::C_NOTSHARING_CONSTRAINT(int Entity){
     int room = this->solution[Entity];
     for(int y = 0; y < this->NoOfEntities; y++){
         if (( this->solution[y] == room ) && ( y != Entity))
-            return 0;
+            return 1;
     }
-    return 1;
+    return 0;
 }
 
 int Solution::C_ADJACENCY_CONSTRAINT(int EntityA, int EntityB){
@@ -184,27 +184,27 @@ int Solution::C_ADJACENCY_CONSTRAINT(int EntityA, int EntityB){
     int size = this->ADJ_LIST_SIZE[ roomA ];
     for( int x = 0; x < size; x++){
         if ( this->ADJ_LIST[roomA][x] == roomB )
-            return 1;
+            return 0;
     }
-    return 0;
+    return 1;
 }
 
 int Solution::C_NEARBY_CONSTRAINT(int EntityA, int EntityB){
     int roomA = this->solution[EntityA];
     int roomB = this->solution[EntityB];
     if ( this->FID[roomA] == this->FID[roomB] )
-        return 1;
-    else
         return 0;
+    else
+        return 1;
 }
 
 int Solution::C_AWAYFROM_CONSTRAINT(int EntityA, int EntityB){
     int roomA = this->solution[EntityA];
     int roomB = this->solution[EntityB];
     if ( this->FID[roomA] != this->FID[roomB] )
-        return 1;
-    else
         return 0;
+    else
+        return 1;
 }
 
 void Solution::FreeData(){

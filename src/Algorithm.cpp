@@ -1,16 +1,9 @@
 #include "Solution.h"
 #include "Algorithm.h"
 
-int translate(int n){
-    if(n == 0)
-        return 1;
-    else
-        return 0;
-}
-
-int penalty(int tipoderestrccion, int param1, int param2, Solution& osap)
+int Constraints(int tipoderestrccion, int param1, int param2, Solution& osap)
 {
-    int n;
+    int n = 0;
     switch (tipoderestrccion)
     {
     case 0:
@@ -47,7 +40,7 @@ int penalty(int tipoderestrccion, int param1, int param2, Solution& osap)
         cout << "ALGO SALIO MAL" << endl;
         break;
     }
-    return translate(n);
+    return n;
 }
 
 int SC_penalizacion(Solution& osap)
@@ -57,10 +50,11 @@ int SC_penalizacion(Solution& osap)
     {
         if (osap.SorH[h] == 0)
         {
-            int y = penalty(osap.CTYPE[h], osap.C1[h], osap.C2[h], osap);
+            /* y es '1' si la restricción h es violada, en otro caso 0 */
+            int y = Constraints(osap.CTYPE[h], osap.C1[h], osap.C2[h], osap);
+            /* w es la penalización por violar la restricción h */
             int w = osap.TypeConstraints[ osap.CTYPE[h] ];
             suma += w*y;
-            cout << osap.CID[h] << "-" << osap.C1[h] << "-" << osap.C2[h] << "-" << y << "-" << suma <<endl;
         }
     }
     return suma;

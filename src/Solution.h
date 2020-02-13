@@ -48,13 +48,19 @@ public:
     int getRandomNumber(int max);
     void swap(int EntityA, int EntityB);
     void interchange(int RoomA, int RoomB);
-    void allocate(int Entity, int room);
+    void reallocate(int Entity, int room);
     void ShowSolution();
 
     /* CONSTRAINTS */
-    int C_CAPACITY_CONSTRAINT(int Room);
+    /* 
+     * En general retornan 1 si la 
+     * restricción NO se cumple, 
+     * en otro caso 0
+     * 
+     * */
     int C_ALLOCATION_CONSTRAINT(int Entity, int room);
     int C_NONALLOCATION_CONSTRAINT(int Entity, int room);
+    int C_CAPACITY_CONSTRAINT(int Room);
     int C_SAMEROOM_CONSTRAINT(int EntityA, int EntityB);
     int C_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB);
     int C_NOTSHARING_CONSTRAINT(int Entity);
