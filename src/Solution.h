@@ -1,6 +1,7 @@
 #ifndef SOLUTION_H
 #define SOLUTION_H
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <string>
 
@@ -38,12 +39,17 @@ public:
     /*********** SOLUTION VARS ***********/
     int *solution;
     int *CurrentroomCapacity;
+    int *Krooms;
 
     /*********** CONSTRUCTOR Y METODOS ***********/
     Solution(string FileToRead);
 
-    /* METODOS */
+    /* SOLUCION INICIAL*/
     void CrearSolucionInicial();
+    int SelectBestRoom( int NEIGHBORHOOD_SIZE );
+    int setNeighbors( int ENTITY, int K );
+
+    /* METODOS */
     void SetConstraintPenalties();
     int getRandomNumber(int max);
     void swap(int EntityA, int EntityB);

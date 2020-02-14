@@ -8,6 +8,7 @@
         "limits": "cpp",
         "ostream": "cpp",
         "cstdlib": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "iostream": "cpp"
     }
 }

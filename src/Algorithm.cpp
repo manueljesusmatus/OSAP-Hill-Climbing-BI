@@ -69,7 +69,7 @@ int HillClimbing(string filename)
     /* print de la weaita */
     osapSol.ShowSolution();
 
-    SC_penalizacion(osapSol);
+    cout << SC_penalizacion(osapSol) << endl;
 
     osapSol.FreeData();
     return 0;
