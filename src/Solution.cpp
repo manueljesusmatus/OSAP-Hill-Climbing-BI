@@ -56,38 +56,56 @@ Solution::Solution(string FileToRead)
     /* Se inicia el arreglo q representa la solución */
     this->SetConstraintPenalties();
     this->solution = new int[this->NoOfEntities];
+    for (int z = 0; z < this->NoOfEntities; z++)
+    {
+        this->solution[z] = -1;
+    }
     this->CurrentroomCapacity = new int[this->NoOfRooms];
-    this->Krooms = new int[ this->NoOfRooms / 3 ];
+    this->Krooms = new int[this->NoOfRooms / 3];
     for (int k = 0; k < this->NoOfRooms; k++)
     {
         this->CurrentroomCapacity[k] = this->RSPACE[k];
     }
 }
 
-int Solution::SelectBestRoom( int NEIGHBORHOOD_SIZE )
+int Solution::SelectBestRoom(int NEIGHBORHOOD_SIZE, int ENTITY)
 {
     int BestRoom = 0;
-    for( int g = 0 ; g < NEIGHBORHOOD_SIZE ; g++ )
+    int Hsuma = 7000;
+    int suma = 0;
+    for (int g = 0; g < NEIGHBORHOOD_SIZE; g++)
     {
         int room = this->Krooms[g];
-        BestRoom = room;
+        this->solution[ENTITY] = room;
+        this->CurrentroomCapacity[this->solution[ENTITY]] -= this->ESPACE[ENTITY];
+        suma = this->SC_penalizacion();
+        if (Hsuma > suma)
+        {
+            Hsuma = suma;
+            BestRoom = room;
+        }
+        else
+        {
+            this->CurrentroomCapacity[this->solution[ENTITY]] += this->ESPACE[ENTITY];
+        }
     }
     return BestRoom;
 }
 
 int Solution::setNeighbors(int ENTITY, int K)
-{  
-    random_shuffle( &this->RID[0], &this->RID[ this->NoOfRooms - 1 ]);
+{
+    random_shuffle(&this->RID[0], &this->RID[this->NoOfRooms - 1]);
     int CONT = 0;
-    for(int h = 0; h < this->NoOfRooms; h++)
+    for (int h = 0; h < this->NoOfRooms; h++)
     {
         int room = this->RID[h];
-        if(( this->RSPACE[room]*1.5 >= this->ESPACE[ENTITY] ) &&
-            ( this->RSPACE[room]*0.5 <= this->ESPACE[ENTITY] ))
+        if ((this->RSPACE[room] * 1.5 >= this->ESPACE[ENTITY]) &&
+            (this->RSPACE[room] * 0.5 <= this->ESPACE[ENTITY]))
         {
-            this->Krooms[ CONT ] = room;
+            this->Krooms[CONT] = room;
             CONT++;
-            if(CONT == K){
+            if (CONT >= K)
+            {
                 return CONT;
             }
         }
@@ -100,14 +118,14 @@ void Solution::CrearSolucionInicial()
     // Se setea K = N / 3
     int K = this->NoOfRooms / 3;
 
-    random_shuffle( &this->EID[0],&this->EID[ this->NoOfEntities - 1 ]);
+    random_shuffle(&this->EID[0], &this->EID[this->NoOfEntities - 1]);
     for (int c = 0; c < this->NoOfEntities; c++)
     {
-        int ENTITY = this->EID[ c ];
-        int NEIGHBORHOOD_SIZE = this->setNeighbors( ENTITY , K );
-        int BestRoom = SelectBestRoom( NEIGHBORHOOD_SIZE );
-        this->CurrentroomCapacity[ BestRoom ] -= ESPACE[ ENTITY ];
-        this->solution[ ENTITY ] = BestRoom;
+        int ENTITY = this->EID[c];
+        int NEIGHBORHOOD_SIZE = this->setNeighbors(ENTITY, K);
+        int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+        this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
+        this->solution[ENTITY] = BestRoom;
     }
 }
 
@@ -173,38 +191,46 @@ void Solution::ShowSolution()
 /*************************  CONSTRAINTS *************************/
 int Solution::C_ALLOCATION_CONSTRAINT(int Entity, int room)
 {
-    if (this->solution[Entity] == room)
-        return 0;
-    else
+    int roomEntity = this->solution[Entity];
+    if (roomEntity != -1)
+    {
+        if (roomEntity == room)
+        {
+            return 0;
+        }
         return 1;
+    }
+    return 0;
 }
 
 int Solution::C_NONALLOCATION_CONSTRAINT(int Entity, int room)
 {
-    if (this->solution[Entity] != room)
-        return 0;
-    else
+    int roomEntity = this->solution[Entity];
+    if (roomEntity != -1)
+    {
+        if (roomEntity != room)
+        {
+            return 0;
+        }
         return 1;
+    }
+    return 0;
 }
 
 int Solution::C_CAPACITY_CONSTRAINT(int Room)
 {
-    int capacity = this->RSPACE[Room];
-    for (int k = 0; k < this->NoOfEntities; k++)
+    if (this->CurrentroomCapacity[Room] < 0)
     {
-        if (this->solution[k] == Room)
-        {
-            capacity -= this->ESPACE[k];
-            if (capacity < 0)
-                return 1;
-        }
+        return 1;
     }
     return 0;
 }
 
 int Solution::C_SAMEROOM_CONSTRAINT(int EntityA, int EntityB)
 {
-    if (this->solution[EntityA] == this->solution[EntityB])
+    if ((this->solution[EntityA] == -1) || (this->solution[EntityB] == -1))
+        return 0;
+    else if (this->solution[EntityA] == this->solution[EntityB])
         return 0;
     else
         return 1;
@@ -212,7 +238,9 @@ int Solution::C_SAMEROOM_CONSTRAINT(int EntityA, int EntityB)
 
 int Solution::C_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB)
 {
-    if (this->solution[EntityA] != this->solution[EntityB])
+    if ((this->solution[EntityA] == -1) || (this->solution[EntityB] == -1))
+        return 0;
+    else if (this->solution[EntityA] != this->solution[EntityB])
         return 0;
     else
         return 1;
@@ -220,6 +248,8 @@ int Solution::C_NOTSAMEROOM_CONSTRAINT(int EntityA, int EntityB)
 
 int Solution::C_NOTSHARING_CONSTRAINT(int Entity)
 {
+    if (this->solution[Entity] == -1)
+        return 0;
     int room = this->solution[Entity];
     for (int y = 0; y < this->NoOfEntities; y++)
     {
@@ -231,6 +261,8 @@ int Solution::C_NOTSHARING_CONSTRAINT(int Entity)
 
 int Solution::C_ADJACENCY_CONSTRAINT(int EntityA, int EntityB)
 {
+    if ((this->solution[EntityA] == -1) || (this->solution[EntityB] == -1))
+        return 0;
     int roomA = this->solution[EntityA];
     int roomB = this->solution[EntityB];
     int size = this->ADJ_LIST_SIZE[roomA];
@@ -244,6 +276,8 @@ int Solution::C_ADJACENCY_CONSTRAINT(int EntityA, int EntityB)
 
 int Solution::C_NEARBY_CONSTRAINT(int EntityA, int EntityB)
 {
+    if ((this->solution[EntityA] == -1) || (this->solution[EntityB] == -1))
+        return 0;
     int roomA = this->solution[EntityA];
     int roomB = this->solution[EntityB];
     if (this->FID[roomA] == this->FID[roomB])
@@ -254,6 +288,8 @@ int Solution::C_NEARBY_CONSTRAINT(int EntityA, int EntityB)
 
 int Solution::C_AWAYFROM_CONSTRAINT(int EntityA, int EntityB)
 {
+    if ((this->solution[EntityA] == -1) || (this->solution[EntityB] == -1))
+        return 0;
     int roomA = this->solution[EntityA];
     int roomB = this->solution[EntityB];
     if (this->FID[roomA] != this->FID[roomB])
@@ -262,14 +298,72 @@ int Solution::C_AWAYFROM_CONSTRAINT(int EntityA, int EntityB)
         return 1;
 }
 
+int Solution::Constraints(int tipoderestrccion, int param1, int param2)
+{
+    int n = 0;
+    switch (tipoderestrccion)
+    {
+    case 0:
+        n = this->C_ALLOCATION_CONSTRAINT(param1, param2);
+        break;
+    case 1:
+        n = this->C_NONALLOCATION_CONSTRAINT(param1, param2);
+        break;
+    case 2:
+        cout << "no debería haber" << endl;
+        break;
+    case 3:
+        n = this->C_CAPACITY_CONSTRAINT(param1);
+        break;
+    case 4:
+        n = this->C_SAMEROOM_CONSTRAINT(param1, param2);
+        break;
+    case 5:
+        n = this->C_NOTSAMEROOM_CONSTRAINT(param1, param2);
+        break;
+    case 6:
+        n = this->C_NOTSHARING_CONSTRAINT(param1);
+        break;
+    case 7:
+        n = this->C_ADJACENCY_CONSTRAINT(param1, param2);
+        break;
+    case 8:
+        n = this->C_NEARBY_CONSTRAINT(param1, param2);
+        break;
+    case 9:
+        n = this->C_AWAYFROM_CONSTRAINT(param1, param2);
+        break;
+    }
+    return n;
+}
+
+int Solution::SC_penalizacion()
+{
+    int suma = 0;
+    for (int h = 0; h < this->NoOfConstraints; h++)
+    {
+        /* y es '1' si la restricción h es violada, en otro caso 0 */
+        int y = Constraints(this->CTYPE[h], this->C1[h], this->C2[h]);
+        /* w es la penalización por violar la restricción h */
+        int w = this->TypeConstraints[this->CTYPE[h]];
+        suma += w * y;
+    }
+    return suma;
+}
+
 void Solution::FreeData()
 {
     /* Free memory */
+    this->input.close();
     for (int i = 0; i < this->NoOfRooms; i++)
     {
         free(this->ADJ_LIST[i]);
     }
     free(this->ADJ_LIST);
+}
+
+Solution::~Solution()
+{
     delete[] this->FID;
     delete[] this->RID;
     delete[] this->EID;
@@ -283,5 +377,7 @@ void Solution::FreeData()
     delete[] this->C2;
     delete[] this->solution;
     delete[] this->CurrentroomCapacity;
+    delete[] this->Krooms;
     delete[] this->ADJ_LIST_SIZE;
-}
+    delete[] this->TypeConstraints;
+};

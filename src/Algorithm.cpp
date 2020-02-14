@@ -48,14 +48,11 @@ int SC_penalizacion(Solution& osap)
     int suma = 0;
     for (int h = 0; h < osap.NoOfConstraints; h++)
     {
-        if (osap.SorH[h] == 0)
-        {
-            /* y es '1' si la restricción h es violada, en otro caso 0 */
-            int y = Constraints(osap.CTYPE[h], osap.C1[h], osap.C2[h], osap);
-            /* w es la penalización por violar la restricción h */
-            int w = osap.TypeConstraints[ osap.CTYPE[h] ];
-            suma += w*y;
-        }
+        /* y es '1' si la restricción h es violada, en otro caso 0 */
+        int y = Constraints(osap.CTYPE[h], osap.C1[h], osap.C2[h], osap);
+        /* w es la penalización por violar la restricción h */
+        int w = osap.TypeConstraints[ osap.CTYPE[h] ];
+        suma += w*y;
     }
     return suma;
 }
@@ -72,5 +69,6 @@ int HillClimbing(string filename)
     cout << SC_penalizacion(osapSol) << endl;
 
     osapSol.FreeData();
+
     return 0;
 }

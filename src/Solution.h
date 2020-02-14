@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
+#include <limits>
 
 using namespace std;
 class Solution
@@ -46,8 +47,12 @@ public:
 
     /* SOLUCION INICIAL*/
     void CrearSolucionInicial();
-    int SelectBestRoom( int NEIGHBORHOOD_SIZE );
+    int SelectBestRoom( int NEIGHBORHOOD_SIZE, int ENTITY  );
     int setNeighbors( int ENTITY, int K );
+
+    /**/
+    int SC_penalizacion();
+    int Constraints(int tipoderestrccion, int param1, int param2);
 
     /* METODOS */
     void SetConstraintPenalties();
@@ -74,5 +79,6 @@ public:
     int C_NEARBY_CONSTRAINT(int EntityA, int EntityB);
     int C_AWAYFROM_CONSTRAINT(int EntityA, int EntityB);
     void FreeData();
+    ~Solution();
 };
 #endif
