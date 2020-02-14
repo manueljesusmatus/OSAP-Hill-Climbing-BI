@@ -56,7 +56,6 @@ public:
 
     /* METODOS */
     void SetConstraintPenalties();
-    int getRandomNumber(int max);
     void swap(int EntityA, int EntityB);
     void interchange(int RoomA, int RoomB);
     void reallocate(int Entity, int room);

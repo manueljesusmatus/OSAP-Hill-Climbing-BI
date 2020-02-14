@@ -144,12 +144,6 @@ void Solution::SetConstraintPenalties()
     this->TypeConstraints[9] = 10;
 }
 
-/* Número random entre 0 y max */
-int Solution::getRandomNumber(int max)
-{
-    return rand() % max;
-}
-
 /* Cambio de habitación entre las entidades A y B*/
 void Solution::swap(int EntityA, int EntityB)
 {
