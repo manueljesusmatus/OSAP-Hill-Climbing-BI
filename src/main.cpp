@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "Algorithm.h"
+#include "AlgorithmHC.h"
 using namespace std;
 
 int main(int argc, char const *argv[])

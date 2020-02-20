@@ -56,11 +56,8 @@ Solution::Solution(string FileToRead)
     /* Se inicia el arreglo q representa la solución */
     this->SetConstraintPenalties();
     this->solution = new int[this->NoOfEntities];
-    for (int z = 0; z < this->NoOfEntities; z++)
-    {
-        this->solution[z] = -1;
-    }
-    this->CurrentroomCapacity = new int[this->NoOfRooms];
+
+    this->CurrentroomCapacity = new double[this->NoOfRooms];
     this->Krooms = new int[this->NoOfRooms / 3];
     for (int k = 0; k < this->NoOfRooms; k++)
     {
@@ -71,28 +68,25 @@ Solution::Solution(string FileToRead)
 int Solution::SelectBestRoom(int NEIGHBORHOOD_SIZE, int ENTITY)
 {
     int BestRoom = 0;
-    int Hsuma = 7000;
+    int Hsuma = numeric_limits<int>::max();
     int suma = 0;
     for (int g = 0; g < NEIGHBORHOOD_SIZE; g++)
     {
         int room = this->Krooms[g];
         this->solution[ENTITY] = room;
         this->CurrentroomCapacity[this->solution[ENTITY]] -= this->ESPACE[ENTITY];
-        suma = this->SC_penalizacion();
+        suma = this->Penalty();
         if (Hsuma > suma)
         {
             Hsuma = suma;
             BestRoom = room;
         }
-        else
-        {
-            this->CurrentroomCapacity[this->solution[ENTITY]] += this->ESPACE[ENTITY];
-        }
+        this->CurrentroomCapacity[this->solution[ENTITY]] += this->ESPACE[ENTITY];
     }
     return BestRoom;
 }
 
-int Solution::setNeighbors(int ENTITY, int K)
+int Solution::setKRooms(int ENTITY, int K)
 {
     random_shuffle(&this->RID[0], &this->RID[this->NoOfRooms - 1]);
     int CONT = 0;
@@ -115,14 +109,16 @@ int Solution::setNeighbors(int ENTITY, int K)
 
 void Solution::CrearSolucionInicial()
 {
-    // Se setea K = N / 3
+    for (int z = 0; z < this->NoOfEntities; z++)
+    {
+        this->solution[z] = -1;
+    }
     int K = this->NoOfRooms / 3;
-
     random_shuffle(&this->EID[0], &this->EID[this->NoOfEntities - 1]);
     for (int c = 0; c < this->NoOfEntities; c++)
     {
         int ENTITY = this->EID[c];
-        int NEIGHBORHOOD_SIZE = this->setNeighbors(ENTITY, K);
+        int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
         int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
         this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
         this->solution[ENTITY] = BestRoom;
@@ -167,10 +163,19 @@ void Solution::interchange(int RoomA, int RoomB)
 }
 
 /* Asigna la habitación room a la entidad Entity*/
-void Solution::reallocate(int Entity, int room)
+double Solution::reallocate(int ENTITY, double calidad)
 {
-    this->solution[Entity] = room;
-    return;
+    // Se selecciona nueva habitación
+    int auxroom = this->solution[ENTITY];
+    int sizeN = this->setKRooms(ENTITY, this->NoOfRooms / 3);
+    // se actualizan valores
+    int room = this->SelectBestRoom(sizeN, ENTITY);
+    this->CurrentroomCapacity[room] -= this->ESPACE[ENTITY];
+    this->CurrentroomCapacity[auxroom] += this->ESPACE[ENTITY];
+    this->solution[ENTITY] = room;
+    // se calcula la calidad de la solución
+    calidad = this->MalUso() + (double)this->Penalty();
+    return calidad;
 }
 
 void Solution::ShowSolution()
@@ -331,7 +336,7 @@ int Solution::Constraints(int tipoderestrccion, int param1, int param2)
     return n;
 }
 
-int Solution::SC_penalizacion()
+int Solution::Penalty()
 {
     int suma = 0;
     for (int h = 0; h < this->NoOfConstraints; h++)
@@ -343,6 +348,18 @@ int Solution::SC_penalizacion()
         suma += w * y;
     }
     return suma;
+}
+
+double Solution::MalUso()
+{
+    double sumaWP = 0;
+    double sumaOP = 0;
+    for (int ROOM = 0; ROOM < this->NoOfRooms; ROOM++)
+    {
+        sumaWP += this->CurrentroomCapacity[ROOM];
+        sumaOP += (-2 * this->CurrentroomCapacity[ROOM]);
+    }
+    return sumaOP;
 }
 
 void Solution::FreeData()

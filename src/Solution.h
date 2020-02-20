@@ -39,7 +39,8 @@ public:
 
     /*********** SOLUTION VARS ***********/
     int *solution;
-    int *CurrentroomCapacity;
+    int *AuxSolution;
+    double *CurrentroomCapacity;
     int *Krooms;
 
     /*********** CONSTRUCTOR Y METODOS ***********/
@@ -48,17 +49,20 @@ public:
     /* SOLUCION INICIAL*/
     void CrearSolucionInicial();
     int SelectBestRoom( int NEIGHBORHOOD_SIZE, int ENTITY  );
-    int setNeighbors( int ENTITY, int K );
+    int setKRooms( int ENTITY, int K );
 
     /**/
-    int SC_penalizacion();
+    int Penalty();
+    double MalUso();
+    double MAL();
+    double wea( int room);
     int Constraints(int tipoderestrccion, int param1, int param2);
 
     /* METODOS */
     void SetConstraintPenalties();
     void swap(int EntityA, int EntityB);
     void interchange(int RoomA, int RoomB);
-    void reallocate(int Entity, int room);
+    double reallocate(int ENTITY, double calidad);
     void ShowSolution();
 
     /* CONSTRAINTS */
