@@ -106,6 +106,55 @@ int Solution::setKRooms(int ENTITY, int K)
     }
     return CONT;
 }
+/********************/
+
+int Solution::XD( int tipo )
+{
+    this->AuxArray = new int[this->NoOfEntities];
+    int n=0;
+    for (int Constraint = 0; Constraint < this->NoOfConstraints; Constraint++)
+    {
+        if( this->SorH[ Constraint ] == tipo ){
+            switch ( this->CTYPE[Constraint] )
+            {
+            case 0:
+                this->AuxArray[n++] = this->C1[Constraint];
+                break;
+            case 1:
+                this->AuxArray[n++] = this->C1[Constraint];
+                break;
+            case 4:
+                this->AuxArray[n++] = this->C1[Constraint];
+                this->AuxArray[n++] = this->C2[Constraint];
+                break;
+            case 5:
+                this->AuxArray[n++] = this->C1[Constraint];
+                this->AuxArray[n++] = this->C2[Constraint];
+                break;
+            case 6:
+                this->AuxArray[n++] = this->C1[Constraint];
+                break;
+            case 7:
+                this->AuxArray[n++] = this->C1[Constraint];
+                this->AuxArray[n++] = this->C2[Constraint];
+                break;
+            case 8:
+                this->AuxArray[n++] = this->C1[Constraint];
+                this->AuxArray[n++] = this->C2[Constraint];
+                break;
+            case 9:
+                this->AuxArray[n++] = this->C1[Constraint];
+                this->AuxArray[n++] = this->C2[Constraint];
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    return n;
+}
+
+/*********************/
 
 void Solution::CrearSolucionInicial()
 {
@@ -114,14 +163,38 @@ void Solution::CrearSolucionInicial()
         this->solution[z] = -1;
     }
     int K = this->NoOfRooms / 3;
+    int l = this->XD(1);
+    for (int c = 0; c < l; c++)
+    {
+        int ENTITY = this->AuxArray[c];
+        if( this->solution[ENTITY] == -1 ){
+            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
+            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+            this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
+            this->solution[ENTITY] = BestRoom;
+        }
+    }
+    l = this->XD(0);
+    for (int c = 0; c < l; c++)
+    {
+        int ENTITY = this->AuxArray[c];
+        if( this->solution[ENTITY] == -1 ){
+            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
+            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+            this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
+            this->solution[ENTITY] = BestRoom;
+        }
+    }
     random_shuffle(&this->EID[0], &this->EID[this->NoOfEntities - 1]);
     for (int c = 0; c < this->NoOfEntities; c++)
     {
         int ENTITY = this->EID[c];
-        int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
-        int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
-        this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
-        this->solution[ENTITY] = BestRoom;
+        if( this->solution[ENTITY] == -1 ){
+            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
+            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+            this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
+            this->solution[ENTITY] = BestRoom;
+        }
     }
 }
 
@@ -138,44 +211,6 @@ void Solution::SetConstraintPenalties()
     this->TypeConstraints[7] = 10;
     this->TypeConstraints[8] = 10;
     this->TypeConstraints[9] = 10;
-}
-
-/* Cambio de habitación entre las entidades A y B*/
-void Solution::swap(int EntityA, int EntityB)
-{
-    int aux = this->solution[EntityA];
-    this->solution[EntityA] = this->solution[EntityB];
-    this->solution[EntityB] = aux;
-    return;
-}
-
-/* Intercambia todas las entidades en RoomA a RoomB y viceversa */
-void Solution::interchange(int RoomA, int RoomB)
-{
-    for (int k = 0; k < this->NoOfEntities; k++)
-    {
-        if (this->solution[k] == RoomA)
-            this->solution[k] = RoomB;
-        else if (this->solution[k] == RoomB)
-            this->solution[k] = RoomA;
-    }
-    return;
-}
-
-/* Asigna la habitación room a la entidad Entity*/
-double Solution::reallocate(int ENTITY, double calidad)
-{
-    // Se selecciona nueva habitación
-    int auxroom = this->solution[ENTITY];
-    int sizeN = this->setKRooms(ENTITY, this->NoOfRooms / 3);
-    // se actualizan valores
-    int room = this->SelectBestRoom(sizeN, ENTITY);
-    this->CurrentroomCapacity[room] -= this->ESPACE[ENTITY];
-    this->CurrentroomCapacity[auxroom] += this->ESPACE[ENTITY];
-    this->solution[ENTITY] = room;
-    // se calcula la calidad de la solución
-    calidad = this->MalUso() + (double)this->Penalty();
-    return calidad;
 }
 
 void Solution::ShowSolution()

@@ -18,7 +18,7 @@ double select_move(int movement, Solution &osapSol)
             osapSol.CurrentroomCapacity[auxroom] += osapSol.ESPACE[ENTITY];
             osapSol.solution[ENTITY] = room;
             double currentcalidad = osapSol.MalUso() + (double)osapSol.Penalty();
-            if (calidad > currentcalidad)
+            if ((calidad > currentcalidad) && ( currentcalidad != -1 ))
             {
                 calidad = currentcalidad;
                 //cout << ENTITY << endl;
@@ -45,15 +45,16 @@ int HillClimbing(string filename)
 
     osapSol.CrearSolucionInicial();
     double global = numeric_limits<double>::max();
-    double calidadMin = osapSol.MalUso() + (double)osapSol.Penalty();
+    double calidadMin; 
     int local;
-    double c = 0;
-    cout << calidadMin << endl;
+    double c;
+
 
     int n = 0;
     while (n < 100)
     {
         local = 1;
+        calidadMin = osapSol.MalUso() + (double)osapSol.Penalty();
         while (local)
         {
             c = select_move(1, osapSol);

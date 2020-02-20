@@ -39,7 +39,7 @@ public:
 
     /*********** SOLUTION VARS ***********/
     int *solution;
-    int *AuxSolution;
+    int *AuxArray;
     double *CurrentroomCapacity;
     int *Krooms;
 
@@ -50,6 +50,7 @@ public:
     void CrearSolucionInicial();
     int SelectBestRoom( int NEIGHBORHOOD_SIZE, int ENTITY  );
     int setKRooms( int ENTITY, int K );
+    int XD( int tipo );
 
     /**/
     int Penalty();
