@@ -42,6 +42,7 @@ public:
     int *AuxArray;
     double *CurrentroomCapacity;
     int *Krooms;
+    int EntidadesDuras;
 
     /*********** CONSTRUCTOR Y METODOS ***********/
     Solution(string FileToRead);
@@ -49,14 +50,12 @@ public:
     /* SOLUCION INICIAL*/
     void CrearSolucionInicial();
     int SelectBestRoom( int NEIGHBORHOOD_SIZE, int ENTITY  );
-    int setKRooms( int ENTITY, int K );
-    int XD( int tipo );
+    int EntitiesHardConstraint();
 
     /**/
     int Penalty();
     double MalUso();
     double MAL();
-    double wea( int room);
     int Constraints(int tipoderestrccion, int param1, int param2);
 
     /* METODOS */

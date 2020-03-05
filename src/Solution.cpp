@@ -56,66 +56,52 @@ Solution::Solution(string FileToRead)
     /* Se inicia el arreglo q representa la solución */
     this->SetConstraintPenalties();
     this->solution = new int[this->NoOfEntities];
-
     this->CurrentroomCapacity = new double[this->NoOfRooms];
     this->Krooms = new int[this->NoOfRooms / 3];
-    for (int k = 0; k < this->NoOfRooms; k++)
-    {
-        this->CurrentroomCapacity[k] = this->RSPACE[k];
-    }
+    this->EntidadesDuras = this->EntitiesHardConstraint();
 }
 
+/* se busca la mejor habitación para una entidad */
 int Solution::SelectBestRoom(int NEIGHBORHOOD_SIZE, int ENTITY)
 {
     int BestRoom = 0;
     int Hsuma = numeric_limits<int>::max();
     int suma = 0;
+    random_shuffle(&this->RID[0], &this->RID[this->NoOfRooms - 1]);
     for (int g = 0; g < NEIGHBORHOOD_SIZE; g++)
     {
-        int room = this->Krooms[g];
-        this->solution[ENTITY] = room;
-        this->CurrentroomCapacity[this->solution[ENTITY]] -= this->ESPACE[ENTITY];
-        suma = this->Penalty();
-        if (Hsuma > suma)
+        int room = this->RID[g];
+        if(
+            ( this->CurrentroomCapacity[room] <= 1.5 * this->ESPACE[ENTITY] ) && 
+            ( this->CurrentroomCapacity[room] >= 0.5 * this->ESPACE[ENTITY] ) )
         {
-            Hsuma = suma;
-            BestRoom = room;
+            // Se asigna habitación
+            this->solution[ENTITY] = room;
+            // se toma el espacio
+            this->CurrentroomCapacity[ room ] -= this->ESPACE[ENTITY];
+            suma = this->Penalty();
+            if ((Hsuma > suma) && (suma != -1))
+            {
+                Hsuma = suma;
+                BestRoom = room;
+            }
+            // libera el espacio
+            this->CurrentroomCapacity[ room ] += this->ESPACE[ENTITY];
         }
-        this->CurrentroomCapacity[this->solution[ENTITY]] += this->ESPACE[ENTITY];
     }
     return BestRoom;
 }
 
-int Solution::setKRooms(int ENTITY, int K)
-{
-    random_shuffle(&this->RID[0], &this->RID[this->NoOfRooms - 1]);
-    int CONT = 0;
-    for (int h = 0; h < this->NoOfRooms; h++)
-    {
-        int room = this->RID[h];
-        if ((this->RSPACE[room] * 1.5 >= this->ESPACE[ENTITY]) &&
-            (this->RSPACE[room] * 0.5 <= this->ESPACE[ENTITY]))
-        {
-            this->Krooms[CONT] = room;
-            CONT++;
-            if (CONT >= K)
-            {
-                return CONT;
-            }
-        }
-    }
-    return CONT;
-}
-/********************/
-
-int Solution::XD( int tipo )
+/* Función q obtiene las entidades asociadas a restricciones duras */
+int Solution::EntitiesHardConstraint()
 {
     this->AuxArray = new int[this->NoOfEntities];
-    int n=0;
+    int n = 0;
     for (int Constraint = 0; Constraint < this->NoOfConstraints; Constraint++)
     {
-        if( this->SorH[ Constraint ] == tipo ){
-            switch ( this->CTYPE[Constraint] )
+        if (this->SorH[Constraint] == 1)
+        {
+            switch (this->CTYPE[Constraint])
             {
             case 0:
                 this->AuxArray[n++] = this->C1[Constraint];
@@ -154,50 +140,43 @@ int Solution::XD( int tipo )
     return n;
 }
 
-/*********************/
-
+/* Función q inicializa la primera solución */
 void Solution::CrearSolucionInicial()
 {
+    // Se inicializa el arrgelo solución con -1 (Entidad sin habitación)
     for (int z = 0; z < this->NoOfEntities; z++)
-    {
         this->solution[z] = -1;
-    }
-    int K = this->NoOfRooms / 3;
-    int l = this->XD(1);
-    for (int c = 0; c < l; c++)
+    // Se inicializa la capacidad de las habitaciones al máximo
+    for (int k = 0; k < this->NoOfRooms; k++)
+        this->CurrentroomCapacity[k] = this->RSPACE[k];
+    // Se inicializa K
+    int K = this->NoOfRooms;//3;
+    // Heuristica, primero se asignan las habitaciones involucradas en retricciones duras
+    for (int c = 0; c < this->EntidadesDuras; c++)
     {
         int ENTITY = this->AuxArray[c];
-        if( this->solution[ENTITY] == -1 ){
-            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
-            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+        if (this->solution[ENTITY] == -1)
+        {
+            int BestRoom = SelectBestRoom(K, ENTITY);
             this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
             this->solution[ENTITY] = BestRoom;
         }
     }
-    l = this->XD(0);
-    for (int c = 0; c < l; c++)
-    {
-        int ENTITY = this->AuxArray[c];
-        if( this->solution[ENTITY] == -1 ){
-            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
-            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
-            this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
-            this->solution[ENTITY] = BestRoom;
-        }
-    }
+    // Se asignan el resto de habitaciones aleatoriamente
     random_shuffle(&this->EID[0], &this->EID[this->NoOfEntities - 1]);
     for (int c = 0; c < this->NoOfEntities; c++)
     {
         int ENTITY = this->EID[c];
-        if( this->solution[ENTITY] == -1 ){
-            int NEIGHBORHOOD_SIZE = this->setKRooms(ENTITY, K);
-            int BestRoom = SelectBestRoom(NEIGHBORHOOD_SIZE, ENTITY);
+        if (this->solution[ENTITY] == -1)
+        {
+            int BestRoom = SelectBestRoom(K, ENTITY);
             this->CurrentroomCapacity[BestRoom] -= ESPACE[ENTITY];
             this->solution[ENTITY] = BestRoom;
         }
     }
 }
 
+/* Penalización de las restricciones */
 void Solution::SetConstraintPenalties()
 {
     this->TypeConstraints = new int[10];
@@ -350,22 +329,22 @@ int Solution::Constraints(int tipoderestrccion, int param1, int param2)
         n = this->C_CAPACITY_CONSTRAINT(param1);
         break;
     case 4:
-        n = this->C_SAMEROOM_CONSTRAINT(param1, param2);
+        n = 2* this->C_SAMEROOM_CONSTRAINT(param1, param2);
         break;
     case 5:
-        n = this->C_NOTSAMEROOM_CONSTRAINT(param1, param2);
+        n = 2 * this->C_NOTSAMEROOM_CONSTRAINT(param1, param2);
         break;
     case 6:
         n = this->C_NOTSHARING_CONSTRAINT(param1);
         break;
     case 7:
-        n = this->C_ADJACENCY_CONSTRAINT(param1, param2);
+        n = 2 * this->C_ADJACENCY_CONSTRAINT(param1, param2);
         break;
     case 8:
-        n = this->C_NEARBY_CONSTRAINT(param1, param2);
+        n = 2 * this->C_NEARBY_CONSTRAINT(param1, param2);
         break;
     case 9:
-        n = this->C_AWAYFROM_CONSTRAINT(param1, param2);
+        n = 2 * this->C_AWAYFROM_CONSTRAINT(param1, param2);
         break;
     }
     return n;
@@ -378,6 +357,10 @@ int Solution::Penalty()
     {
         /* y es '1' si la restricción h es violada, en otro caso 0 */
         int y = Constraints(this->CTYPE[h], this->C1[h], this->C2[h]);
+        /* La solución actual no respeta una restricción dura*/
+        if(( y == 1 ) && ( this->SorH[h] == 1 )){
+            //cout << "a";
+        }
         /* w es la penalización por violar la restricción h */
         int w = this->TypeConstraints[this->CTYPE[h]];
         suma += w * y;
@@ -387,14 +370,14 @@ int Solution::Penalty()
 
 double Solution::MalUso()
 {
-    double sumaWP = 0;
-    double sumaOP = 0;
+    double sumaDesperdiciado = 0;
+    double sumaSobreutilizado = 0;
     for (int ROOM = 0; ROOM < this->NoOfRooms; ROOM++)
     {
-        sumaWP += this->CurrentroomCapacity[ROOM];
-        sumaOP += (-2 * this->CurrentroomCapacity[ROOM]);
+        sumaDesperdiciado += this->CurrentroomCapacity[ROOM];
+        sumaSobreutilizado += (-2 * this->CurrentroomCapacity[ROOM]);
     }
-    return sumaOP;
+    return max(sumaSobreutilizado, sumaDesperdiciado);
 }
 
 void Solution::FreeData()
@@ -426,4 +409,5 @@ Solution::~Solution()
     delete[] this->Krooms;
     delete[] this->ADJ_LIST_SIZE;
     delete[] this->TypeConstraints;
+    delete[] this->AuxArray;
 };

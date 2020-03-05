@@ -1,79 +1,133 @@
 #include "Solution.h"
 #include "AlgorithmHC.h"
 
-double select_move(int movement, Solution &osapSol)
+double SWAP(Solution &osapSol, double calidad)
+{
+    int entity = -1;
+    int room1,room2;
+    for (int ENTITY = 0; ENTITY < osapSol.NoOfEntities-1; ENTITY++)
+    {
+        int auxroom1 = osapSol.solution[ENTITY];
+        int auxroom2 = osapSol.solution[ENTITY + 1];
+        osapSol.CurrentroomCapacity[auxroom1] += osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom2] += osapSol.ESPACE[ENTITY + 1];
+        // SWAP
+        osapSol.solution[ENTITY] = auxroom2;
+        osapSol.solution[ENTITY + 1] = auxroom1;
+        osapSol.CurrentroomCapacity[auxroom2] -= osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom1] -= osapSol.ESPACE[ENTITY + 1];
+        double currentcalidad = osapSol.MalUso() + (double)osapSol.Penalty();
+        if ((calidad > currentcalidad) && (currentcalidad != -1))
+        {
+            calidad = currentcalidad;
+            entity = ENTITY;
+            room1 = auxroom1;
+            room2 = auxroom2;
+        }
+        osapSol.solution[ENTITY] = auxroom1;
+        osapSol.solution[ENTITY + 1] = auxroom2;
+        osapSol.CurrentroomCapacity[auxroom2] += osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom1] += osapSol.ESPACE[ENTITY + 1];
+        osapSol.CurrentroomCapacity[auxroom1] -= osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom2] -= osapSol.ESPACE[ENTITY + 1];
+    }
+    if(entity != -1){
+        osapSol.solution[entity] = room2;
+        osapSol.solution[entity + 1] = room1;
+        osapSol.CurrentroomCapacity[room2] -= osapSol.ESPACE[entity];
+        osapSol.CurrentroomCapacity[room1] -= osapSol.ESPACE[entity + 1];
+    }
+    return calidad;
+}
+
+double REALLOCATE(Solution &osapSol, double calidad)
+{
+    int finalroom = -1;
+    int finalentity;
+    for (int ENTITY = 0; ENTITY < osapSol.NoOfEntities; ENTITY++)
+    {
+        int auxroom = osapSol.solution[ENTITY];
+        int room = rand() % osapSol.NoOfRooms;  
+        //int room = osapSol.SelectBestRoom(osapSol.NoOfRooms, ENTITY);
+        //int room = osapSol.SelectBestRoom(osapSol.NoOfRooms/3, ENTITY);
+        osapSol.CurrentroomCapacity[room] -= osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom] += osapSol.ESPACE[ENTITY];
+        osapSol.solution[ENTITY] = room;
+        double currentcalidad = osapSol.MalUso() + (double)osapSol.Penalty();
+        if ((calidad > currentcalidad) && (currentcalidad != -1))
+        {
+            calidad = currentcalidad;
+            finalentity = ENTITY;
+            finalroom = room;
+        }
+        osapSol.solution[ENTITY] = auxroom;
+        osapSol.CurrentroomCapacity[room] += osapSol.ESPACE[ENTITY];
+        osapSol.CurrentroomCapacity[auxroom] -= osapSol.ESPACE[ENTITY];
+    }
+    if( finalroom != -1){
+        osapSol.CurrentroomCapacity[finalroom] -= osapSol.ESPACE[finalentity];
+        osapSol.CurrentroomCapacity[osapSol.solution[finalentity]] += osapSol.ESPACE[finalentity];
+        osapSol.solution[finalentity] = finalroom;
+    }
+    return calidad;
+}
+
+double Vecindario(int movement, Solution &osapSol)
 {
     double calidad = numeric_limits<double>::max();
     switch (movement)
     {
     case 0:
-        //SWAP
+        calidad = SWAP(osapSol, calidad);
         break;
     case 1: // reallocate
-        for (int ENTITY = 0; ENTITY < osapSol.NoOfEntities; ENTITY++)
-        {
-            int auxroom = osapSol.solution[ENTITY];
-            int room = osapSol.SelectBestRoom(osapSol.setKRooms(ENTITY, osapSol.NoOfRooms / 3), ENTITY);
-            osapSol.CurrentroomCapacity[room] -= osapSol.ESPACE[ENTITY];
-            osapSol.CurrentroomCapacity[auxroom] += osapSol.ESPACE[ENTITY];
-            osapSol.solution[ENTITY] = room;
-            double currentcalidad = osapSol.MalUso() + (double)osapSol.Penalty();
-            if ((calidad > currentcalidad) && ( currentcalidad != -1 ))
-            {
-                calidad = currentcalidad;
-                //cout << ENTITY << endl;
-            }
-            else
-            {
-                osapSol.solution[ENTITY] = auxroom;
-                osapSol.CurrentroomCapacity[room] += osapSol.ESPACE[ENTITY];
-                osapSol.CurrentroomCapacity[auxroom] -= osapSol.ESPACE[ENTITY];
-            }
-        }
+        calidad = REALLOCATE(osapSol, calidad);
         break;
     case 2:
         //INTERCHANGE
         break;
     }
-
     return calidad;
 }
 
 int HillClimbing(string filename)
 {
     Solution osapSol(filename);
-
-    osapSol.CrearSolucionInicial();
     double global = numeric_limits<double>::max();
-    double calidadMin; 
+    int loops = 1000;
+    double calidadMin;
     int local;
-    double c;
-
-
+    double calidadNuevaSolucion;
+    double suma = 0;
     int n = 0;
-    while (n < 100)
+    while (n < loops)
     {
+        osapSol.CrearSolucionInicial();
         local = 1;
         calidadMin = osapSol.MalUso() + (double)osapSol.Penalty();
         while (local)
         {
-            c = select_move(1, osapSol);
-            if (c < calidadMin)
+            calidadNuevaSolucion = Vecindario(1, osapSol);
+            if (calidadNuevaSolucion < calidadMin)
             {
-                calidadMin = c;
+                calidadMin = calidadNuevaSolucion;
             }
             else
             {
                 local = 0;
             }
-            //cout << c << endl;
         }
-        if( c < global){
-            global = c;
+        suma += calidadNuevaSolucion;
+        if (calidadNuevaSolucion < global)
+        {
+            global = calidadNuevaSolucion;
+        }
+        if( n%100 == 0){
+            cout << n << endl;
         }
         n++;
     }
-
+    cout << suma / loops << endl;
     cout << global << endl;
 
     osapSol.FreeData();
