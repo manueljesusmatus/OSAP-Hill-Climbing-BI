@@ -57,37 +57,55 @@ Solution::Solution(string FileToRead)
     this->SetConstraintPenalties();
     this->solution = new int[this->NoOfEntities];
     this->CurrentroomCapacity = new double[this->NoOfRooms];
-    this->Krooms = new int[this->NoOfRooms / 3];
     this->EntidadesDuras = this->EntitiesHardConstraint();
+
+    double mean = 0;
+    for (int i = 0; i < this->NoOfEntities; i++)
+    {
+        mean += this->ESPACE[i];
+    }
+    mean /= this->NoOfEntities;
+
+    double sd = 0;
+    for( int n = 0; n < this->NoOfEntities ; n++)
+    {
+        sd += ( this->ESPACE[n] - mean) * (this->ESPACE[n] - mean);
+    }
+    sd = sd / this->NoOfEntities;
+    sd = sqrt(sd);
+
+    for( int n = 0; n < this->NoOfEntities ; n++)
+    {
+        if(ESPACE[n] > (mean+2*sd))
+            cout << n << endl;
+    }
 }
 
 /* se busca la mejor habitación para una entidad */
 int Solution::SelectBestRoom(int NEIGHBORHOOD_SIZE, int ENTITY)
 {
     int BestRoom = 0;
-    int Hsuma = numeric_limits<int>::max();
-    int suma = 0;
+    double Hsuma = numeric_limits<double>::max();
+    double suma = 0;
+    double castigo;
     random_shuffle(&this->RID[0], &this->RID[this->NoOfRooms - 1]);
     for (int g = 0; g < NEIGHBORHOOD_SIZE; g++)
     {
         int room = this->RID[g];
-        if(
-            ( this->CurrentroomCapacity[room] <= 1.5 * this->ESPACE[ENTITY] ) && 
-            ( this->CurrentroomCapacity[room] >= 0.5 * this->ESPACE[ENTITY] ) )
+
+        // Se asigna habitación
+        this->solution[ENTITY] = room;
+        // se toma el espacio
+        this->CurrentroomCapacity[room] -= this->ESPACE[ENTITY];
+        castigo = (double)this->Penalty();
+        suma = this->MalUso();
+        if ((Hsuma > (suma + castigo)) && (castigo != -1))
         {
-            // Se asigna habitación
-            this->solution[ENTITY] = room;
-            // se toma el espacio
-            this->CurrentroomCapacity[ room ] -= this->ESPACE[ENTITY];
-            suma = this->Penalty();
-            if ((Hsuma > suma) && (suma != -1))
-            {
-                Hsuma = suma;
-                BestRoom = room;
-            }
-            // libera el espacio
-            this->CurrentroomCapacity[ room ] += this->ESPACE[ENTITY];
+            Hsuma = suma + castigo;
+            BestRoom = room;
         }
+        // libera el espacio
+        this->CurrentroomCapacity[room] += this->ESPACE[ENTITY];
     }
     return BestRoom;
 }
@@ -150,7 +168,7 @@ void Solution::CrearSolucionInicial()
     for (int k = 0; k < this->NoOfRooms; k++)
         this->CurrentroomCapacity[k] = this->RSPACE[k];
     // Se inicializa K
-    int K = this->NoOfRooms;//3;
+    int K = this->NoOfRooms; //3;
     // Heuristica, primero se asignan las habitaciones involucradas en retricciones duras
     for (int c = 0; c < this->EntidadesDuras; c++)
     {
@@ -196,9 +214,8 @@ void Solution::ShowSolution()
 {
     for (int i = 0; i < this->NoOfEntities; i++)
     {
-        cout << this->solution[i] << " - ";
+        cout <<"ENTITY : " << i << "   ROOM : " << this->solution[i] << endl;
     }
-    cout << endl;
 }
 
 /*************************  CONSTRAINTS *************************/
@@ -329,7 +346,7 @@ int Solution::Constraints(int tipoderestrccion, int param1, int param2)
         n = this->C_CAPACITY_CONSTRAINT(param1);
         break;
     case 4:
-        n = 2* this->C_SAMEROOM_CONSTRAINT(param1, param2);
+        n = 2 * this->C_SAMEROOM_CONSTRAINT(param1, param2);
         break;
     case 5:
         n = 2 * this->C_NOTSAMEROOM_CONSTRAINT(param1, param2);
@@ -358,8 +375,9 @@ int Solution::Penalty()
         /* y es '1' si la restricción h es violada, en otro caso 0 */
         int y = Constraints(this->CTYPE[h], this->C1[h], this->C2[h]);
         /* La solución actual no respeta una restricción dura*/
-        if(( y == 1 ) && ( this->SorH[h] == 1 )){
-            //cout << "a";
+        if ((y > 0) && (this->SorH[h] == 1))
+        {
+            return -1;
         }
         /* w es la penalización por violar la restricción h */
         int w = this->TypeConstraints[this->CTYPE[h]];
@@ -372,12 +390,14 @@ double Solution::MalUso()
 {
     double sumaDesperdiciado = 0;
     double sumaSobreutilizado = 0;
+    double suma = 0;
     for (int ROOM = 0; ROOM < this->NoOfRooms; ROOM++)
     {
-        sumaDesperdiciado += this->CurrentroomCapacity[ROOM];
-        sumaSobreutilizado += (-2 * this->CurrentroomCapacity[ROOM]);
+        sumaDesperdiciado = this->CurrentroomCapacity[ROOM];
+        sumaSobreutilizado = (-2 * this->CurrentroomCapacity[ROOM]);
+        suma += max(sumaSobreutilizado, sumaDesperdiciado);
     }
-    return max(sumaSobreutilizado, sumaDesperdiciado);
+    return suma;
 }
 
 void Solution::FreeData()

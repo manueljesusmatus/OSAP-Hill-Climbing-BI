@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 #include <limits>
-
+#include <math.h>  
 using namespace std;
 class Solution
 {

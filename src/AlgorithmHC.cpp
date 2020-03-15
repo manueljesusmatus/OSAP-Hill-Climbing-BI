@@ -47,14 +47,15 @@ double REALLOCATE(Solution &osapSol, double calidad)
     for (int ENTITY = 0; ENTITY < osapSol.NoOfEntities; ENTITY++)
     {
         int auxroom = osapSol.solution[ENTITY];
-        int room = rand() % osapSol.NoOfRooms;  
-        //int room = osapSol.SelectBestRoom(osapSol.NoOfRooms, ENTITY);
+        //int room = rand() % osapSol.NoOfRooms;  
+        int room = osapSol.SelectBestRoom(osapSol.NoOfRooms, ENTITY);
         //int room = osapSol.SelectBestRoom(osapSol.NoOfRooms/3, ENTITY);
         osapSol.CurrentroomCapacity[room] -= osapSol.ESPACE[ENTITY];
         osapSol.CurrentroomCapacity[auxroom] += osapSol.ESPACE[ENTITY];
         osapSol.solution[ENTITY] = room;
-        double currentcalidad = osapSol.MalUso() + (double)osapSol.Penalty();
-        if ((calidad > currentcalidad) && (currentcalidad != -1))
+        double castigo = (double)osapSol.Penalty();
+        double currentcalidad = osapSol.MalUso() + castigo;
+        if ((calidad > currentcalidad) && (castigo != -1))
         {
             calidad = currentcalidad;
             finalentity = ENTITY;
@@ -94,20 +95,25 @@ int HillClimbing(string filename)
 {
     Solution osapSol(filename);
     double global = numeric_limits<double>::max();
-    int loops = 1000;
+    int loops = 10;
     double calidadMin;
     int local;
     double calidadNuevaSolucion;
     double suma = 0;
+    double castigo;
     int n = 0;
     while (n < loops)
     {
         osapSol.CrearSolucionInicial();
         local = 1;
-        calidadMin = osapSol.MalUso() + (double)osapSol.Penalty();
+        castigo = (double)osapSol.Penalty();
+        calidadMin = osapSol.MalUso() + castigo;
+        cout << "--> " << calidadMin << "   ---> "<< castigo << endl;
+        if ( castigo == -1)
+            osapSol.ShowSolution();
         while (local)
         {
-            calidadNuevaSolucion = Vecindario(1, osapSol);
+            calidadNuevaSolucion = Vecindario( rand() % 2 , osapSol);
             if (calidadNuevaSolucion < calidadMin)
             {
                 calidadMin = calidadNuevaSolucion;
@@ -129,6 +135,7 @@ int HillClimbing(string filename)
     }
     cout << suma / loops << endl;
     cout << global << endl;
+
 
     osapSol.FreeData();
 
