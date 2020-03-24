@@ -1,7 +1,7 @@
 
 # OSAP-Hill-Climbing MM + R
 
-  * Manuel Jesús Matus Huaiquiñir
+  * Manuel Matus
   * 201673533-K
 
 ## Build
