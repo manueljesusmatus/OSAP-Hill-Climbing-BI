@@ -50,13 +50,14 @@ int Solution::SelectBestRoom(Instancia &inst, int ENTITY)
         // se toma el espacio
         this->CurrentroomCapacity[room] -= inst.ESPACE[ENTITY];
         castigo = Penalty(inst);
-        espacios = MalUso(inst);
-        if (
-            (Hsuma > castigo + espacios) &&
-            (castigo != -1))
+        if( castigo != -1 )
         {
-            Hsuma = castigo + espacios;
-            BestRoom = room;
+            espacios = MalUso(inst);
+            if (Hsuma > castigo + espacios )
+            {
+                Hsuma = castigo + espacios;
+                BestRoom = room;
+            }
         }
         // libera el espacio
         this->CurrentroomCapacity[room] += inst.ESPACE[ENTITY];

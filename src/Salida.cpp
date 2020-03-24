@@ -3,7 +3,6 @@
 Salida::Salida(Instancia &instancia, Solution &solution, string Filename)
 {
     string file = "Salidas/"+Filename+".out";
-    cout << file << endl;
     this->myfile.open( file );
     Restricciones_blandas(instancia, solution);
     Espacios(instancia, solution);

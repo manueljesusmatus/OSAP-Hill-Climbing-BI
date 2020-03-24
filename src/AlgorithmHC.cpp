@@ -11,6 +11,7 @@ double INTERCHANGE(Solution &osapSol, Solution &nueva, Solution &aux, Instancia 
     double castigo, currentcalidad;
     int cambio = -1;
 
+    // Las habitaciones son tomadas de manera aleatoria
     random_shuffle(&inst.RID[0], &inst.RID[0] + inst.NoOfRooms - 1);
     for (int ROOM = 0; ROOM < (inst.NoOfRooms - 1) / 3; ROOM++)
     {
@@ -35,6 +36,7 @@ double INTERCHANGE(Solution &osapSol, Solution &nueva, Solution &aux, Instancia 
         }
         castigo = aux.Penalty(inst);
         currentcalidad = aux.MalUso(inst) + castigo;
+        // si y solo si la solución es factible y mejor que la actual se guarda como nueva (Mejor Mejora)
         if ((calidad > currentcalidad) && (castigo != -1))
         {
             calidad = currentcalidad;
@@ -95,17 +97,22 @@ double REALLOCATE(Solution &osapSol, Solution &nueva, Instancia &inst)
     for (int ENTITY = 0; ENTITY < inst.NoOfEntities; ENTITY++)
     {
         int auxroom = osapSol.solution[ENTITY];
+        // se toma una habitación aleatoria
         int room = rand() % inst.NoOfRooms;
         osapSol.CurrentroomCapacity[room] -= inst.ESPACE[ENTITY];
         osapSol.CurrentroomCapacity[auxroom] += inst.ESPACE[ENTITY];
         osapSol.solution[ENTITY] = room;
         castigo = osapSol.Penalty(inst);
-        currentcalidad = osapSol.MalUso(inst) + castigo;
-        if ((calidad > currentcalidad) && (castigo != -1))
+        // si la habitación es factible y de mayor calidad (Mejor Mejora)
+        if( castigo != -1 )
         {
-            calidad = currentcalidad;
-            cambio = 1;
-            nueva.copySolution(inst, osapSol.solution, osapSol.CurrentroomCapacity);
+            currentcalidad = osapSol.MalUso(inst) + castigo;
+            if ( calidad > currentcalidad )
+            {
+                calidad = currentcalidad;
+                cambio = 1;
+                nueva.copySolution(inst, osapSol.solution, osapSol.CurrentroomCapacity);
+            }
         }
         osapSol.CurrentroomCapacity[room] += inst.ESPACE[ENTITY];
         osapSol.CurrentroomCapacity[auxroom] -= inst.ESPACE[ENTITY];
@@ -114,6 +121,7 @@ double REALLOCATE(Solution &osapSol, Solution &nueva, Instancia &inst)
     return cambio;
 }
 
+/* Función que deriva al movimiento determinado y convierte a nueva en current si se ecnontró una mejor solución en el vecindario */
 double Vecindario(int movement, Solution &osapSol, Solution &nueva, Solution &aux, Instancia &inst)
 {
     int cambio;
@@ -129,11 +137,21 @@ double Vecindario(int movement, Solution &osapSol, Solution &nueva, Solution &au
     {
         cambio = INTERCHANGE(osapSol, nueva, aux, inst);
     }
+    // si la solución cambio (es decir nueva.calidad > osap.calidad), nueva pasa a ser current
     if(cambio == 1)
         osapSol.copySolution( inst, nueva.solution, nueva.CurrentroomCapacity );
     return osapSol.Calidad( inst );
 }
 
+
+/*
+* loops determina cuantos restarts se llevarán a cabo
+* move determina cual movimiento se realizará 
+*               0 -> Reallocate
+*               1 -> Swap
+*               2 -> Interchange
+*               3 -> cada iteracion uno de los 3 es seleccionado aleatoriamente
+*/
 int HillClimbing(string filename, int loops, int move)
 {
     Instancia instancia(filename);
@@ -158,17 +176,15 @@ int HillClimbing(string filename, int loops, int move)
         iniciales[n] = calidadMin;
         while (local)
         {
+            int movimiento = move;
             if (move == 3)
-                move = rand() % 3;
-            calidadNuevaSolucion = Vecindario(move, SolCurrent, SolNueva, aux, instancia);
+                movimiento = rand() % 3;
+            calidadNuevaSolucion = Vecindario(movimiento, SolCurrent, SolNueva, aux, instancia);
+
             if (calidadNuevaSolucion < calidadMin)
-            {
                 calidadMin = calidadNuevaSolucion;
-            }
             else
-            {
                 local = 0;
-            }
         }
         suma += calidadMin;
         calidades[n] = calidadMin;
@@ -184,13 +200,6 @@ int HillClimbing(string filename, int loops, int move)
     cout << "Mejor solución : " << global << endl;
     Salida outputFile(instancia, SolBest, filename);
 
-    for (int x = 0; x < loops; x++)
-        cout << calidades[x] << ",";
-    cout << endl;
-
-    for (int x = 0; x < loops; x++)
-        cout << iniciales[x] << ",";
-    cout << endl;
 
     instancia.FreeData();
     return 0;
